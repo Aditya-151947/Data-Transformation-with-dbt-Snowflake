@@ -1,0 +1,83 @@
+USE WAREHOUSE COMPUTE_WH;
+USE DATABASE MOVIELENS;
+USE SCHEMA RAW;
+
+create stage netflixstage
+URL='s3://netflixdataset-aditya'
+CREDENTIALS=(AWS_KEY_ID='####################' AWS_SECRET_KEY='###########################')  -- ihave change the credentials to maintain privacy
+
+-- 
+CREATE OR REPLACE TABLE raw_movies(
+    movieId integer,
+    title STRING,
+    genres STRING
+) 
+COPY INTO RAW_MOVIES
+FROM '@netflixstage/movies.csv'
+file_format=(type='csv' SKIP_HEADER=1 FIELD_OPTIONALLY_ENCLOSED_BY ='"');
+
+SELECT * FROM RAW_MOVIES;
+
+-- 
+CREATE OR REPLACE TABLE raw_ratings(
+    userId integer,
+    movieId integer,
+    rating float,
+    timestamp bigint
+)
+COPY INTO RAW_RATINGS
+FROM '@netflixstage/ratings.csv'
+file_format=(type='csv' SKIP_HEADER=1 FIELD_OPTIONALLY_ENCLOSED_BY ='"');
+
+-- 
+CREATE OR REPLACE TABLE raw_tags(
+    userId integer,
+    movieId integer,
+    tag string,
+    timestamp bigint
+);
+copy into raw_tags
+from '@netflixstage/tags.csv'
+file_format = (
+  type = 'csv'
+  skip_header = 1
+  field_optionally_enclosed_by = '"'
+)
+on_error = 'continue';
+
+select * from raw_tags
+
+-- 
+CREATE OR REPLACE TABLE raw_genome_scores(
+    movieId integer,
+    tagId integer,
+    relevance float
+);
+COPY INTO RAW_GENOME_SCORES
+FROM '@netflixstage/genome-scores.csv'
+file_format=(type='csv' SKIP_HEADER=1 FIELD_OPTIONALLY_ENCLOSED_BY ='"');
+select * from raw_genome_scores;
+
+-- 
+CREATE OR REPLACE TABLE raw_genome_tags(
+    tagId integer,
+    tag string
+);
+COPY INTO RAW_GENOME_TAGS
+FROM '@netflixstage/genome-tags.csv'
+file_format=(type='csv' SKIP_HEADER=1 FIELD_OPTIONALLY_ENCLOSED_BY ='"');
+select * from raw_genome_tags;
+
+-- 
+CREATE OR REPLACE TABLE raw_links(
+    movieId integer,
+    imdbId integer,
+    tmdbId integer
+);
+COPY INTO RAW_links
+FROM '@netflixstage/links.csv'
+file_format=(type='csv' SKIP_HEADER=1 FIELD_OPTIONALLY_ENCLOSED_BY ='"');
+select * from raw_links;
+
+
+drop views my_second_dbt_model;
